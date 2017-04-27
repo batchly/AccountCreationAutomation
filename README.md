@@ -5,7 +5,7 @@
 * AccountCreation module of CMPUTE: Automates the process of AccountCreation .
 * Version v1.0
 
-###How to run?####
+### How to run? ####
 
 * The module accepts four parameters, AccessKey,SecretKey,Domain and a CSV file which has your credentials.
 * The module loads the data from the CSV file and generates the outputfile with name "results.csv".
@@ -17,7 +17,7 @@
 
 
 
-###Download Binary from the Below links###
+### Download Binary from the Below links ###
 
 * Windows: https://s3.amazonaws.com/cmpute-accountcreationautomation/windows/accountcreation.exe
 * Linux: https://s3.amazonaws.com/cmpute-accountcreationautomation/linux/accountcreation
