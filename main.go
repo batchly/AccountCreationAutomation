@@ -17,7 +17,8 @@ func main() {
 
 	ApiAccessKey := os.Args[1]
 	ApiSecretKey := os.Args[2]
-	Filename := os.Args[3]
+	DomainURL := os.Args[3]
+	Filename := os.Args[4]
 
 	records, err := utils.ReadCSV(Filename)
 	if err != nil {
@@ -35,6 +36,6 @@ func main() {
 	defer writer.Flush()
 	//Getting the data from the crendentials.csv
 
-	channels.New(records, ApiAccessKey, ApiSecretKey, writer)
+	channels.New(records, ApiAccessKey, ApiSecretKey, DomainURL, writer)
 
 }

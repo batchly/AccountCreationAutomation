@@ -10,4 +10,5 @@ const (
 	CMPUTE_ACCOUNT_ERROR      = "Account creation failed"
 	CMPUTE_ACCOUNT            = "Account created"
 	REGION                    = "us-east-1"
+	DOMAIN                    = "DOMAIN"
 )

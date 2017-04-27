@@ -20,7 +20,7 @@ import (
 var mu sync.RWMutex
 var wg sync.WaitGroup
 
-func New(records [][]string, ApiAccessKey, ApiSecretKey string, writer *csv.Writer) {
+func New(records [][]string, ApiAccessKey, ApiSecretKey, DomainUrl string, writer *csv.Writer) {
 	lenArray := len(records)
 	//Creating a Buffered Channel
 	inputChan := make(chan model.CsvWriter, lenArray)
@@ -31,11 +31,10 @@ func New(records [][]string, ApiAccessKey, ApiSecretKey string, writer *csv.Writ
 		secretkey := record[1]
 		region := record[2]
 		AccountName := record[3]
-		DomainUrl := record[4]
 
 		// skip header row
 		if i == 0 {
-			writer.Write([]string{accesskey, secretkey, region, AccountName, DomainUrl, constants.CSV_HEADER_ROLEARN, constants.CSV_HEADER_STATUS, constants.CSV_HEADER_CMPUTE_ACCOUNT})
+			writer.Write([]string{accesskey, secretkey, region, AccountName, constants.DOMAIN, constants.CSV_HEADER_ROLEARN, constants.CSV_HEADER_STATUS, constants.CSV_HEADER_CMPUTE_ACCOUNT})
 			continue
 		}
 		wg.Add(1)
@@ -64,6 +63,8 @@ func StartAccountCreation(accesskey, secretkey, region, AccountName, DomainUrl, 
 	//Creating CloudFormationStack using Batchly's CloudFormationTemplate
 	createstackResp, err := stack.CreateStack(svc)
 	if err != nil {
+		mu.Lock()
+		defer mu.Unlock()
 		logger.Get().Error(err)
 		time.Sleep(1 * time.Second)
 		CsvWriterObj := model.CsvWriter{Accesskey: accesskey, Secretkey: secretkey, Region: region, Account: AccountName, Domain: DomainUrl, RoleArn: constants.ROLEARN_ERROR, RoleArnStatus: err.Error(), CmputeAccountStatus: constants.CMPUTE_ACCOUNT_ERROR}
@@ -83,6 +84,8 @@ func StartAccountCreation(accesskey, secretkey, region, AccountName, DomainUrl, 
 
 		for _, stack := range describestackResp.Stacks {
 			if *stack.StackStatus == "CREATE_FAILED" {
+				mu.Lock()
+				defer mu.Unlock()
 				CsvWriterObj := model.CsvWriter{Accesskey: accesskey, Secretkey: secretkey, Region: region, Account: AccountName, Domain: DomainUrl, RoleArn: constants.ROLEARN_ERROR, RoleArnStatus: constants.ROLEARN_FAILURE_STATUS, CmputeAccountStatus: constants.CMPUTE_ACCOUNT_ERROR}
 				val := CsvWriterObj
 				writer.Write([]string{val.Accesskey, val.Secretkey, val.Region, val.Account, val.Domain, val.RoleArn, val.RoleArnStatus, val.CmputeAccountStatus})
@@ -92,12 +95,16 @@ func StartAccountCreation(accesskey, secretkey, region, AccountName, DomainUrl, 
 
 					Result := post.PostCall(AccountName, region, *output.OutputValue, "ApiKey "+ApiAccessKey+":"+ApiSecretKey, DomainUrl, 0)
 					if Result == 1 {
+						mu.Lock()
+						defer mu.Unlock()
 						CsvWriterObj := model.CsvWriter{Accesskey: accesskey, Secretkey: secretkey, Region: region, Account: AccountName, Domain: DomainUrl, RoleArn: *output.OutputValue, RoleArnStatus: constants.ROLEARN_SUCCESS_STATUS, CmputeAccountStatus: constants.CMPUTE_ACCOUNT}
 						val := CsvWriterObj
 						writer.Write([]string{val.Accesskey, val.Secretkey, val.Region, val.Account, val.Domain, val.RoleArn, val.RoleArnStatus, val.CmputeAccountStatus})
 						inputChan <- CsvWriterObj
 
 					} else {
+						mu.Lock()
+						defer mu.Unlock()
 						CsvWriterObj := model.CsvWriter{Accesskey: accesskey, Secretkey: secretkey, Region: region, Account: AccountName, Domain: DomainUrl, RoleArn: *output.OutputValue, RoleArnStatus: constants.ROLEARN_SUCCESS_STATUS, CmputeAccountStatus: constants.CMPUTE_ACCOUNT_ERROR}
 						val := CsvWriterObj
 						writer.Write([]string{val.Accesskey, val.Secretkey, val.Region, val.Account, val.Domain, val.RoleArn, val.RoleArnStatus, val.CmputeAccountStatus})
@@ -114,12 +121,16 @@ func StartAccountCreation(accesskey, secretkey, region, AccountName, DomainUrl, 
 				goto describestatus
 
 			} else if *stack.StackStatus == "ROLLBACK_FAILED" {
+				mu.Lock()
+				defer mu.Unlock()
 				CsvWriterObj := model.CsvWriter{Accesskey: accesskey, Secretkey: secretkey, Region: region, Account: AccountName, Domain: DomainUrl, RoleArn: constants.ROLEARN_ERROR, RoleArnStatus: constants.ROLEARN_FAILURE_STATUS, CmputeAccountStatus: constants.CMPUTE_ACCOUNT_ERROR}
 				val := CsvWriterObj
 				writer.Write([]string{val.Accesskey, val.Secretkey, val.Region, val.Account, val.Domain, val.RoleArn, val.RoleArnStatus, val.CmputeAccountStatus})
 				inputChan <- CsvWriterObj
 
 			} else if *stack.StackStatus == "ROLLBACK_COMPLETE" {
+				mu.Lock()
+				defer mu.Unlock()
 				CsvWriterObj := model.CsvWriter{Accesskey: accesskey, Secretkey: secretkey, Region: region, Account: AccountName, Domain: DomainUrl, RoleArn: constants.ROLEARN_ERROR, RoleArnStatus: constants.ROLEARN_FAILURE_STATUS, CmputeAccountStatus: constants.CMPUTE_ACCOUNT_ERROR}
 				val := CsvWriterObj
 				writer.Write([]string{val.Accesskey, val.Secretkey, val.Region, val.Account, val.Domain, val.RoleArn, val.RoleArnStatus, val.CmputeAccountStatus})
@@ -134,8 +145,7 @@ func StartAccountCreation(accesskey, secretkey, region, AccountName, DomainUrl, 
 //Getting the data from the Channel
 func FileWriterFunc(inputChan chan model.CsvWriter, writer *csv.Writer) {
 	//	defer close(inputChan)
-	mu.Lock()
-	defer mu.Unlock()
+
 	for val := range inputChan {
 		logger.Get().Infoln("Getting the Value out of channel", val)
 	}

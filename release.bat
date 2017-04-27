@@ -2,8 +2,10 @@
 CLS
 
 ECHO Cleaning up bin directory
-DEL accountcreationautomation.exe
-DEL accountcreationautomation
+DEL ..\..\bin\accountcreationautomation.exe
+DEL ..\..\bin\linux_amd64\accountcreationautomation
+DEL ..\..\bin\darwin_amd64\accountcreationautomation
+
 
 ECHO Starting Windows build
 SET GOOS=windows
