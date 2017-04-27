@@ -7,7 +7,8 @@
 
 ### How to run? ####
 
-* The module accepts four parameters, AccessKey,SecretKey,Domain and a CSV file which has your credentials.
+* The module accepts four parameters - AccessKey,SecretKey,Domain and a CSV file which has your credentials.
+     > accountcreation.exe <accessKey> <secretKey> <tenantURL> <csvFileName>
 * The module loads the data from the CSV file and generates the outputfile with name "results.csv".
 * The input CSV file has to be maintained in a format that is given below.
 
